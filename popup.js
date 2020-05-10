@@ -12,32 +12,26 @@ chrome.storage.sync.get('color', function (data) {
 });
 
 changeColor.onclick = function (element) {
-  // let color = element.target.value;
-  // chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-  //   chrome.tabs.executeScript(
-  //       tabs[0].id,
-  //       {code: 'document.body.style.backgroundColor = "' + color + '";'});
-  // });
 
-  fetch('https://trello.com/1/card/5d2b6ab5ba70c623a13ca7db?fields=id,closed,isTemplate,cover&list=true&list_fields=closed&stickers=true&sticker_fields=id')
-    .then(response => response.json())
-    .then(data => {
-      console.log(data);
-      alert(JSON.stringify(data));
-      chrome.tabs.create({ 'url': chrome.extension.getURL('webapp.html') }, function (tab) {
-        // Tab opened.
-        console.log('test');
-        alert('checkpoint');
-        chrome.tabs.executeScript(
-          tab,
-          {
-            code: 'alert("test");document.getElementById("msg").innerHTML = "' + JSON.stringify(data) +
-              '";' + 'console.log("' + JSON.stringify(data) + '"' +
-              ';'
-          }
-        );
-      });
+  // create a new tab with an html page that resides in extension domain:
+  chrome.tabs.create({
+    'url': chrome.extension.getURL("page.html"),
+    'active': false
+  }, function (tab) {
+    var selfTabId = tab.id;
+    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+      if (changeInfo.status == "complete" && tabId == selfTabId) {
+        // send the data to the page's script:
+        var tabs = chrome.extension.getViews({ type: "tab" });
+
+        fetch('https://trello.com/1/card/5d2b6ab5ba70c623a13ca7db?fields=id,closed,isTemplate,cover&list=true&list_fields=closed&stickers=true&sticker_fields=id')
+          .then(response => tabs[0].doSomething(response));
+
+      }
+
     });
+  });
+
 
 
 
